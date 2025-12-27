@@ -148,8 +148,6 @@ async def handle_chat_message(request: ChatRequest):
         try:
             llm = ChatGroq(model_name=model_name, groq_api_key=GROQ_API_KEY, temperature=0.1)
             
-            # --- FIXED CHAIN LOGIC ---
-            # We must pull the docs and format them as a string before passing to the prompt
             retrieved_docs = retriever.invoke(request.query)
             context_text = format_docs(retrieved_docs)
 
