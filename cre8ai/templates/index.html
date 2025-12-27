@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cre8AI Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1>Cre8<span>AI</span></h1>
+                <div class="header-actions">
+                    <div class="language-toggle">
+                        <span id="lang-label">English</span>
+                        <label class="switch">
+                            <input type="checkbox" id="language-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <button id="refresh-button" title="New Chat">Reset</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="chat-box" id="chat-box"></div>
+
+        <form id="chat-form" class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Ask a question..." autocomplete="off" required>
+            <button type="submit" id="send-button">Send</button>
+        </form>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>
