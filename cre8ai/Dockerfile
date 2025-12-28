@@ -16,6 +16,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # --- Final Stage ---
 FROM python:3.12-slim
 
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -42,8 +47,9 @@ RUN mkdir -p /app/db /app/data /app/cache/huggingface && \
 # Pre-download the embedding model (optional but recommended for faster first start)
 RUN python -c "from langchain_community.embeddings import HuggingFaceEmbeddings; HuggingFaceEmbeddings(model_name='BAAI/bge-small-en-v1.5')"
 
-USER appuser
+RUN chmod +x /app/entrypoint.sh
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 EXPOSE 7860
 
 # Use uvicorn for the application
