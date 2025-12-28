@@ -1,0 +1,36 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# Environment variables
+.env
+.env.local
+
+# ChromaDB persistent storage
+cre8ai/db/chroma_db/
+
+# FastAPI/Uvicorn
+*.log
+
+# Docker
+*.pid
+.idea
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Python distribution / packaging
+*.egg-info/
+dist/
+build/
