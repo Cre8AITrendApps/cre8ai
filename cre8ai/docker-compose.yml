@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: cre8ai_app
     ports:
-      - "7860:7860"
+      - "9090:7860"
     volumes:
       - ./db:/app/db
       - ./data:/app/data
