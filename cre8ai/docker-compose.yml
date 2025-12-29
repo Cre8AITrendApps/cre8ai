@@ -1,6 +1,6 @@
 services:
   app:
-    image: shayanshahzad/hassan:v2
+    image: shayanshahzad/hassan:v3
     build:
       context: .
       dockerfile: Dockerfile
