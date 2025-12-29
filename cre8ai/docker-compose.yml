@@ -1,5 +1,6 @@
 services:
   app:
+    image: hassan:v2
     build:
       context: .
       dockerfile: Dockerfile
