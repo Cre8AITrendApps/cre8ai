@@ -132,7 +132,7 @@ def format_docs(docs):
 
 @app.post("/chat")
 async def handle_chat_message(request: ChatRequest):
-    KNOWLEDGE_BASE = "cre8ai" 
+    KNOWLEDGE_BASE = "all" 
     
     try:
         vectorstore = Chroma(client=chroma_client, collection_name=KNOWLEDGE_BASE, embedding_function=embeddings)
