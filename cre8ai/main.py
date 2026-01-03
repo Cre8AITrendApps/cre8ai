@@ -16,17 +16,24 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.messages import AIMessage, HumanMessage
 
 # --- Load Environment Variables ---
 load_dotenv()
 MODELS = ["openai/gpt-oss-120b","openai/gpt-oss-20b","meta-llama/llama-4-scout-17b-16e-instruct","llama-3.1-8b-instant", "llama-3.3-70b-versatile"]
+GROQ_KEYS = [
+    os.getenv("GROQ_API_KEY_1"),
+    os.getenv("GROQ_API_KEY_2"),
+    os.getenv("GROQ_API_KEY_3"),
+    os.getenv("GROQ_API_KEY_4"),
+    os.getenv("GROQ_API_KEY_5")
+]
+# Filter out None values in case some keys aren't set in .env
+GROQ_KEYS = [k for k in GROQ_KEYS if k]
 
-GROQ_API_KEY = "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" 
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY not found in .env file")
+if not GROQ_KEYS:
+    raise ValueError("No GROQ API keys found in environment variables.")
 
 # --- Paths & Config ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -37,8 +44,6 @@ EMBEDDING_MODEL_NAME = "BAAI/bge-small-en-v1.5"
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
-llm = ChatGroq(model_name="openai/gpt-oss-120b", groq_api_key=GROQ_API_KEY, temperature=0.0)
 session_histories: Dict[str, List[Tuple[str, str]]] = {}
 embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 chroma_client = chromadb.PersistentClient(path=DB_DIR)
@@ -142,30 +147,38 @@ async def handle_chat_message(request: ChatRequest):
 
     history = [msg for pair in session_histories.get(request.session_id, []) for msg in [HumanMessage(content=pair[0]), AIMessage(content=pair[1])]]
     language_name = "Arabic" if request.language == "ar" else "English"
+    retrieved_docs = retriever.invoke(request.query)
+    context_text = format_docs(retrieved_docs)
 
     last_error = ""
     for model_name in MODELS:
-        try:
-            llm = ChatGroq(model_name=model_name, groq_api_key=GROQ_API_KEY, temperature=0.1)
-            
-            retrieved_docs = retriever.invoke(request.query)
-            context_text = format_docs(retrieved_docs)
+        for api_key in GROQ_KEYS:
+            try:
+                print(f"DEBUG: Trying model {model_name} with key ending in ...{api_key[-4:]}")
+                
+                llm = ChatGroq(
+                    model_name=model_name, 
+                    groq_api_key=api_key, 
+                    temperature=0.1,
+                    max_retries=1 # Langchain internal retries
+                )
+                
+                chain = ANSWER_PROMPT | llm | StrOutputParser()
 
-            chain = ANSWER_PROMPT | llm | StrOutputParser()
+                answer = chain.invoke({
+                    "question": request.query,
+                    "chat_history": history,
+                    "context": context_text,
+                    "language_name": language_name
+                })
 
-            answer = chain.invoke({
-                "question": request.query,
-                "chat_history": history,
-                "context": context_text,
-                "language_name": language_name
-            })
+                session_histories.setdefault(request.session_id, []).append((request.query, answer))
+                return {"answer": markdown2.markdown(answer), "session_id": request.session_id}
 
-            session_histories.setdefault(request.session_id, []).append((request.query, answer))
-            return {"answer": markdown2.markdown(answer), "session_id": request.session_id}
 
-        except Exception as e:
-            print(f"DEBUG: Model {model_name} failed: {e}")
-            last_error = str(e)
-            continue 
+            except Exception as e:
+                print(f"DEBUG: Model {model_name} failed: {e}")
+                last_error = str(e)
+                continue 
             
     raise HTTPException(status_code=500, detail=f"All models failed. Last error: {last_error}")
