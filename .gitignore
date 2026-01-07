@@ -34,3 +34,4 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+cre8ai/.env
